@@ -1,0 +1,32 @@
+# Secrets and local settings
+.env
+.env.*
+!.env.example
+*.pem
+
+# Generated applications: NEVER commit sandbox content
+sandbox/
+
+# Python environments and bytecode
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.py[cod]
+
+# Logs and diagnostics
+logs/
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Builds and local editors
+build/
+dist/
+*.egg-info/
+.DS_Store
+__MACOSX/
+.idea/
+.vscode/
