@@ -26,7 +26,7 @@ The system should prevent the user from withdrawing funds that would leave them 
 
 def run():
     """
-    Run the multi-agent engineering team.
+    Run Agent Forge: the multi-agent engineering team.
     """
     inputs = {
         'requirements': os.getenv('ENGINEERING_REQUIREMENTS') or requirements,

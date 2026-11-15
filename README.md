@@ -1,4 +1,4 @@
-# Multi-Agent Engineering Team
+# Agent Forge
 
 A local **CrewAI-powered software engineering workflow** in which four LLM-based agents turn natural-language requirements into a Python backend, a Gradio user interface, and backend unit tests. Generated output is written into a local `sandbox/` directory. The generated code is tested through a Docker-based execution tool.
 

@@ -71,7 +71,7 @@ def offer_to_launch() -> None:
     Prompt the user after the engineering crew finishes.
     """
     print("\n" + "=" * 55)
-    print("MULTI-AGENT ENGINEERING TEAM FINISHED")
+    print("AGENT FORGE FINISHED")
     print("=" * 55)
 
     app_path = SANDBOX_DIR / "app.py"
