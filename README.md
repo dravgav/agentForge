@@ -36,7 +36,7 @@ The Engineering Lead and Frontend Engineer are configured to use Context7 MCP fo
 
 ```bash
 # Clone your GitHub repository, then enter its root directory
-cd multi-agent-engineering-team
+cd agentForge
 
 # Create local config; do NOT commit the .env file
 cp .env.example .env
@@ -98,7 +98,7 @@ The **test filename varies** between generations; replace `test_account_service.
 ## Repository layout
 
 ```text
-multi-agent-engineering-team/
+agentForge/
 ├── src/engineering_team/
 │   ├── config/agents.yaml        # Agent roles, LLM configurations
 │   ├── config/tasks.yaml         # Sequential tasks and contexts
