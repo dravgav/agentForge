@@ -2,8 +2,6 @@
 
 A local **CrewAI-powered software engineering workflow** in which four LLM-based agents turn natural-language requirements into a Python backend, a Gradio user interface, and backend unit tests. Generated output is written into a local `sandbox/` directory. The generated code is tested through a Docker-based execution tool.
 
-> **Status:** Portfolio/course-derived prototype, not a production coding service. Results depend on LLM output. Successful CrewAI completion does **not** guarantee correct generated software. Review generated code before running it outside Docker.
-
 ## How it works
 
 ```text
@@ -118,20 +116,3 @@ multi-agent-engineering-team/
 ```
 
 `sandbox/`, local virtual environments, and execution logs are deliberately excluded from version control. This repository contains the **engineering team**, not a packaged example of generated code.
-
-## Known limitations and security
-
-- Sequential workflow; no durable memory, job queue, human review gates, or automated final acceptance criteria.
-- The generated backend and frontend may have bugs even if the crew finishes normally.
-- Local Docker tool mounts a writable directory and is **not a hardened security boundary**; this project must not be exposed to arbitrary public coding requests without much stronger isolation, limits, and review.
-- Agents can generate different files every run, and their tests may miss application bugs.
-- On first use, uv may resolve dependencies and Docker may download its base image.
-- Docker is necessary for agents to execute generated code as presently written; users only **viewing an already deployed Gradio example** would not need it.
-
-## Future improvements
-
-Independent acceptance tests; per-run workspace preservation; environment and tool hardening; better execution logging and tracing; richer codebase awareness and task-state persistence; a browser-based interface for submitting requirements.
-
-## Attribution
-
-Initially implemented as the **Week 3 Multi-Agent Engineering Team** exercise in the Udemy course [The Complete Agentic AI Engineering Course](https://www.udemy.com/course/the-complete-agentic-ai-engineering-course/). The project is being independently extended with environment isolation, clearer setup, error reporting, and developer-facing launch tooling. This is not presented as a wholly original architecture.
