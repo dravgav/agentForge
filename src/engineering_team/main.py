@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from engineering_team.crew import EngineeringTeam
 from engineering_team.tools.sandbox_tools import reset_sandbox
+from engineering_team.agentforge_events import AgentForgeListener
 
 load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=False)
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
@@ -34,6 +35,7 @@ def run():
 
     try:
         reset_sandbox()
+        listener = AgentForgeListener()
 
         EngineeringTeam().crew().kickoff(inputs=inputs)
         

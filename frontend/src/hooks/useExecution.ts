@@ -1,13 +1,12 @@
 
 import { useEffect, useState } from "react";
-
+import { createRun, getRun, launchRun } from "../api";
 import type {
   Agent,
   ExecutionState,
   LogEntry,
 } from "../types/execution";
 
-// The four agents in our CrewAI workflow
 const initialAgents: Agent[] = [
   {
     id: "lead",
@@ -35,14 +34,6 @@ const initialAgents: Agent[] = [
   },
 ];
 
-// Simulated completion messages
-const messages = [
-  "Engineering design completed",
-  "Backend implementation completed",
-  "Frontend implementation completed",
-  "Testing and validation completed",
-];
-
 function createInitialState(): ExecutionState {
   return {
     runStatus: "idle",
@@ -51,109 +42,190 @@ function createInitialState(): ExecutionState {
   };
 }
 
-function createLog(
-  agent: string,
-  message: string
-): LogEntry {
-  return {
-    id: crypto.randomUUID(),
-    timestamp: new Date().toLocaleTimeString(),
-    agent,
-    message,
-  };
-}
-
 export function useExecution() {
   const [execution, setExecution] =
     useState<ExecutionState>(createInitialState);
+  const [runId, setRunId] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [artifactReady, setArtifactReady] = useState(false);
+  const [launching, setLaunching] = useState(false);
+  const [launchError, setLaunchError] = useState<string | null>(null);
+  const isRunning =
+    starting || execution.runStatus === "running";
 
-  const [currentStep, setCurrentStep] = useState(0);
+  // Launching will be implemented in the next milestone.
+  // Do not enable the button until a real launch API exists.
+  const canLaunch =
+    execution.runStatus === "completed" &&
+    artifactReady &&
+    !launching &&
+    runId !== null;
 
-  // Derived state
-  const isRunning = execution.runStatus === "running";
-  const canLaunch = execution.runStatus === "completed";
-
-  // Start a new simulated CrewAI execution
-  function startExecution(prompt: string) {
+  async function startExecution(prompt: string) {
     if (!prompt.trim() || isRunning) return;
 
+    setArtifactReady(false);
+    setLaunchError(null);
+    setStarting(true);
+    setRunId(null);
     setExecution({
       runStatus: "running",
-      agents: initialAgents.map((agent, index) => ({
-        ...agent,
-        status: index === 0 ? "running" : "pending",
-      })),
-      logs: [
-        createLog("System", "Project submitted"),
-        createLog(
-          "Engineering Lead",
-          "Starting architecture design"
-        ),
-      ],
+      agents: initialAgents.map((agent) => ({ ...agent })),
+      logs: [],
     });
 
-    setCurrentStep(0);
+    try {
+      const result = await createRun(prompt);
+      setRunId(result.run_id);
+    } catch (error) {
+      setExecution((previous) => ({
+        ...previous,
+        runStatus: "failed",
+        logs: [
+          {
+            id: crypto.randomUUID(),
+            timestamp: new Date().toLocaleTimeString(),
+            agent: "System",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Failed to start execution",
+          },
+        ],
+      }));
+    } finally {
+      setStarting(false);
+    }
   }
 
-  // Simulate the agents completing their work
+  // Poll FastAPI for real execution updates
   useEffect(() => {
-    if (!isRunning) return;
+    if (!runId) return;
 
-    const timer = window.setTimeout(() => {
-        const step = currentStep;
-      
-        const completedAgent = initialAgents[step];
-        const nextAgent = initialAgents[step + 1];
-      
-        const newLogs = [
-          createLog(completedAgent.name, messages[step]),
-        ];
-      
-        if (nextAgent) {
-          newLogs.push(
-            createLog(nextAgent.name, "Starting assigned task")
-          );
-        } else {
-          newLogs.push(
-            createLog("System", "Project generation completed")
-          );
-        }
-      
-        setExecution((previous) => ({
-          agents: previous.agents.map((agent, index) => ({
+    let cancelled = false;
+    let timer: number | undefined;
+
+    async function poll() {
+      try {
+        const result = await getRun(runId!);
+        if (cancelled) return;
+
+        setArtifactReady(result.artifact_ready);
+
+        const completed = result.status === "completed";
+        const failed = result.status === "failed";
+
+        // In V1, agent-level statuses are not yet available.
+        // We only mark all stages completed when the
+        // entire sequential CrewAI workflow succeeds.
+        const agents: Agent[] = initialAgents.map(
+          (agent) => ({
             ...agent,
-            status: (
-              index <= step
-                ? "completed"
-                : index === step + 1
-                  ? "running"
-                  : "pending"
-            ) as Agent["status"],
-          })),
-          logs: [...previous.logs, ...newLogs],
-          runStatus: nextAgent ? "running" : "completed",
-        }));
-      
-        setCurrentStep((previous) => previous + 1);
-      }, 2500);
+            status:
+              result.agent_statuses[agent.name] ?? "pending",
+          })
+        );
 
-    // Cancel pending simulation timers when necessary
-    return () => window.clearTimeout(timer);
-  }, [currentStep, isRunning]);
+        const logs: LogEntry[] = result.logs.map(
+          (message, index) => ({
+            id: `${result.run_id}-${index}`,
+            timestamp: "",
+            agent: "CrewAI",
+            message,
+          })
+        );
 
-  function launchProject() {
-    if (!canLaunch) return;
+        if (result.error) {
+          logs.push({
+            id: `${result.run_id}-error`,
+            timestamp: "",
+            agent: "System",
+            message: result.error,
+          });
+        }
 
-    // Later: POST /api/runs/{run_id}/launch
-    window.alert(
-      "Mock project launch successful! FastAPI integration comes next."
-    );
-  }
+        setExecution({
+          runStatus: completed
+            ? "completed"
+            : failed
+              ? "failed"
+              : "running",
+          agents,
+          logs,
+        });
+
+        if (completed || failed) return;
+      } catch (error) {
+        if (cancelled) return;
+
+        // Temporary connection failures should not
+        // automatically mark the CrewAI job as failed.
+        console.error("Polling failed:", error);
+      }
+
+      if (!cancelled) {
+        timer = window.setTimeout(poll, 2000);
+      }
+    }
+
+    void poll();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [runId]);
+
+
+  async function launchProject() {
+    if (!runId || !canLaunch) return;
+  
+    setLaunching(true);
+    setLaunchError(null);
+  
+    // Open a tab immediately from the user's click.
+    // This avoids popup blockers after an async API call.
+    const newTab = window.open("about:blank", "_blank");
+  
+    if (newTab) {
+      newTab.opener = null;
+    }
+  
+    try {
+      const result = await launchRun(runId);
+  
+      if (newTab && !newTab.closed) {
+        newTab.location.replace(result.url);
+      } else {
+        // Fallback if the browser blocked the new tab.
+        window.location.assign(result.url);
+      }
+  
+    } catch (error) {
+      if (newTab && !newTab.closed) {
+        newTab.close();
+      }
+  
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to launch project";
+  
+      setLaunchError(message);
+  
+      console.error("Project launch failed:", error);
+  
+    } finally {
+      setLaunching(false);
+    }
+  }  
 
   return {
     execution,
     isRunning,
     canLaunch,
+    launching,
+    launchError,
     startExecution,
     launchProject,
   };

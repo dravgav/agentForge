@@ -19,6 +19,8 @@ function App() {
     execution,
     isRunning,
     canLaunch,
+    launching,
+    launchError,
     startExecution,
     launchProject,
   } = useExecution();
@@ -76,6 +78,8 @@ function App() {
 
         <ProjectLauncher
           canLaunch={canLaunch}
+          launching={launching}
+          launchError={launchError}
           onLaunch={launchProject}
         />
       </main>
