@@ -6,7 +6,9 @@ description = "Four-agent CrewAI software engineering workflow with Docker-based
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "crewai[tools]==1.14.7",
+    "fastapi>=0.141.1",
     "python-dotenv>=1,<2",
+    "uvicorn[standard]>=0.54.0",
 ]
 
 [project.scripts]
@@ -28,3 +30,13 @@ type = "crew"
 [tool.uv.workspace]
 members = []
 exclude = ["sandbox"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"
+
+[tool.basedpyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"
