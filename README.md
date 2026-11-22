@@ -285,7 +285,3 @@ Generated and local-only directories include `sandbox/`, `.agentforge-runs/`, `f
 - Server-Sent Events for live agent updates
 - Improved artifact validation and error reporting
 - **Business requirements discovery:** An AI-driven clarification flow that asks targeted questions and produces approved, structured requirements before engineering begins
-
-## License
-
-Add a license file and update this section if you choose to distribute AgentForge under a specific license.
