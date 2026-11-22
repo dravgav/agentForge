@@ -278,10 +278,3 @@ Generated and local-only directories include `sandbox/`, `.agentforge-runs/`, `f
 - **Generated code is untrusted:** Docker restrictions reduce exposure but do not provide a complete security boundary. Do not expose the launch API or generated Gradio apps publicly without stronger isolation, authentication, and access controls.
 - **Verification:** A successful CrewAI process or a reachable Gradio page does not guarantee all generated features or tests are correct.
 
-## Roadmap
-
-- Persistent run history and recovery
-- Per-run generation sandboxes and application lifecycle controls
-- Server-Sent Events for live agent updates
-- Improved artifact validation and error reporting
-- **Business requirements discovery:** An AI-driven clarification flow that asks targeted questions and produces approved, structured requirements before engineering begins
